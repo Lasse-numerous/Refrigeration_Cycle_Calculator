@@ -16,3 +16,8 @@ I included a PDF of an example refrigeration cycle problem from the ASHRAE funda
 ## Building an executable
 
 Build the program to `dist/` using `pyinstaller -F filename.py`
+
+### To deploy the app on Numerous
+
+- Install the dev requirements with `pip install -r requirements-dev.txt`
+- Run `numerous deploy -o your-org-slug`. You can find your org slug by running `numerous orgarnization list` after you have signed up for free on numerous.com.
