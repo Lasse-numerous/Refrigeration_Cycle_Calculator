@@ -2,3 +2,7 @@ venv/
 dist/
 build/
 *.spec
+.venv/
+
+# added by numerous init
+.env

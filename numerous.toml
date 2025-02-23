@@ -1,0 +1,11 @@
+name = "Refrigeration Cycle Calculator"
+description = "The app aims to simulate a theoretical refrigeration cycle -- given inputs such as temperature, pressure, superheat/subcooling, and compressor efficiency."
+cover_image = "app_cover.jpg"
+exclude = ["*venv", "venv*", ".git", ".env"]
+port = 80
+
+[python]
+  library = "streamlit"
+  version = "3.12"
+  app_file = "refrig_cycle_calc_Streamlit.py"
+  requirements_file = "requirements.txt"
