@@ -11,7 +11,6 @@ Sources:
 [1] Thermodynamics An Engineering Approach (Cengel & Boles 8th Edition)
 [2] Danfoss CoolSelector2
 
-Date: 02/21/2025 (ver 2.0)
 """
 import tkinter as tk
 from tkinter import ttk, messagebox
@@ -212,14 +211,14 @@ class RefrigerationCycleGUI:
         """
         try:
             # Collect user inputs
-            refrigerant   = self.refrigerant_var.get()
-            ref_state     = self.ref_state_var.get()
-            evap_type     = self.evap_choice.get()
-            evap_value    = float(self.evap_entry.get())
-            cond_type     = self.cond_choice.get()
-            cond_value    = float(self.cond_entry.get())
-            superheat_F   = float(self.superheat_entry.get())
-            subcooling_F  = float(self.subcooling_entry.get())
+            refrigerant = self.refrigerant_var.get()
+            ref_state = self.ref_state_var.get()
+            evap_type = self.evap_choice.get()
+            evap_value = float(self.evap_entry.get())
+            cond_type = self.cond_choice.get()
+            cond_value = float(self.cond_entry.get())
+            superheat_F = float(self.superheat_entry.get())
+            subcooling_F = float(self.subcooling_entry.get())
             isentropic_eff = float(self.efficiency_entry.get())
             mass_flow_lb_min = float(self.mass_flow_entry.get())
 
@@ -246,32 +245,47 @@ class RefrigerationCycleGUI:
         # Evaporator side
         if "Pressure" in evap_type:
             low_pressure = convert_to_si("P", evap_value)
-            sat_evap_T   = CP.PropsSI('T', 'P', low_pressure, 'Q', 1, refrigerant)
+            sat_evap_T = CP.PropsSI('T', 'P', low_pressure, 'Q', 1, refrigerant)
         else:
-            sat_evap_T   = convert_to_si("T", evap_value)
+            sat_evap_T = convert_to_si("T", evap_value)
             low_pressure = CP.PropsSI('P', 'T', sat_evap_T, 'Q', 1, refrigerant)
 
         # Condenser side
         if "Pressure" in cond_type:
             high_pressure = convert_to_si("P", cond_value)
-            sat_cond_T    = CP.PropsSI('T', 'P', high_pressure, 'Q', 1, refrigerant)
+            sat_cond_T = CP.PropsSI('T', 'P', high_pressure, 'Q', 1, refrigerant)
         else:
-            sat_cond_T    = convert_to_si("T", cond_value)
+            sat_cond_T = convert_to_si("T", cond_value)
             high_pressure = CP.PropsSI('P', 'T', sat_cond_T, 'Q', 1, refrigerant)
 
-        # Convert superheat & subcooling from °F to K
-        superheat_K  = max(0.0001, superheat_F  * 5.0/9.0)
-        subcooling_K = max(0.0001, subcooling_F * 5.0/9.0)
-        mass_flow    = convert_to_si("M", mass_flow_lb_min)
+        # --- VALIDATION: Condenser > Evaporator ---
+        if sat_cond_T <= sat_evap_T:
+            messagebox.showerror(
+                "Input Error",
+                "Condenser temperature must be greater than evaporator temperature."
+            )
+            return
+        if high_pressure <= low_pressure:
+            messagebox.showerror(
+                "Input Error",
+                "Condenser pressure must be greater than evaporator pressure."
+            )
+            return
+        # -----------------------------------------
 
-        # STATE POINTS
+        # Convert superheat & subcooling from °F to K
+        superheat_K = max(0.0001, superheat_F * 5.0 / 9.0)
+        subcooling_K = max(0.0001, subcooling_F * 5.0 / 9.0)
+        mass_flow = convert_to_si("M", mass_flow_lb_min)
+
+        # ============= STATE POINTS =============
         # 1: Evaporator Exit
         T1 = sat_evap_T + superheat_K
         H1 = CP.PropsSI('H', 'P', low_pressure, 'T', T1, refrigerant)
         S1 = CP.PropsSI('S', 'P', low_pressure, 'T', T1, refrigerant)
         D1 = CP.PropsSI('D', 'P', low_pressure, 'T', T1, refrigerant)
 
-        # 2: Compressor Exit
+        # 2: Compressor Exit (Ideal => isentropic, then adjust for efficiency)
         h2s_ideal = CP.PropsSI('H', 'P', high_pressure, 'S', S1, refrigerant)
         H2 = H1 + (h2s_ideal - H1) / isentropic_eff
         T2 = CP.PropsSI('T', 'P', high_pressure, 'H', H2, refrigerant)
@@ -286,37 +300,38 @@ class RefrigerationCycleGUI:
         D3 = CP.PropsSI('D', 'P', high_pressure, 'T', T3, refrigerant)
 
         # 4: Expansion Valve
+        #   (Assume isenthalpic expansion => H4 = H3)
         H4 = H3
         T4 = CP.PropsSI('T', 'P', low_pressure, 'H', H4, refrigerant)
         S4 = CP.PropsSI('S', 'P', low_pressure, 'H', H4, refrigerant)
         D4 = CP.PropsSI('D', 'P', low_pressure, 'H', H4, refrigerant)
 
-        # PERFORMANCE
-        compressor_work = mass_flow * (H2 - H1)
-        heat_removed    = mass_flow * (H1 - H4)
-        heat_rejected   = mass_flow * (H2 - H3)
+        # ============= PERFORMANCE =============
+        compressor_work = mass_flow * (H2 - H1)  # [W]
+        heat_removed = mass_flow * (H1 - H4)  # [W]
+        heat_rejected = mass_flow * (H2 - H3)  # [W]
         COP = heat_removed / compressor_work if compressor_work != 0 else 0.0
 
-        # Convert to IP
+        # Convert results to IP
         comp_btu_hr = convert_from_si("Heat", compressor_work)
-        rem_btu_hr  = convert_from_si("Heat", heat_removed)
-        rej_btu_hr  = convert_from_si("Heat", heat_rejected)
+        rem_btu_hr = convert_from_si("Heat", heat_removed)
+        rej_btu_hr = convert_from_si("Heat", heat_rejected)
 
-        tons_ref   = rem_btu_hr / 12000.0
-        comp_kW    = compressor_work / 1000.0
+        tons_ref = rem_btu_hr / 12000.0
+        comp_kW = compressor_work / 1000.0
         kw_per_ton = comp_kW / tons_ref if tons_ref > 0 else float('inf')
 
-        # DISPLAY
+        # ============= OUTPUT =============
         self.output_text.delete("1.0", tk.END)
 
-        # Summarize
+        # Summaries
         self.output_text.insert(tk.END, f"Refrigerant: {refrigerant}\n")
         self.output_text.insert(tk.END, f"Reference State: {ref_state}\n")
         self.output_text.insert(tk.END, f"Evaporator Input: {evap_value} ({evap_type})\n")
         self.output_text.insert(tk.END, f"Condenser Input: {cond_value} ({cond_type})\n")
         self.output_text.insert(tk.END, f"Superheat: {superheat_F:.1f} °F\n")
         self.output_text.insert(tk.END, f"Subcooling: {subcooling_F:.1f} °F\n")
-        self.output_text.insert(tk.END, f"Isentropic Efficiency: {isentropic_eff*100:.1f}%\n")
+        self.output_text.insert(tk.END, f"Isentropic Efficiency: {isentropic_eff * 100:.1f}%\n")
         self.output_text.insert(tk.END, f"Mass Flow Rate: {mass_flow_lb_min:.2f} lb/min\n\n")
 
         self.output_text.insert(tk.END, "--- Refrigeration Cycle Results (IP Units) ---\n")
@@ -326,6 +341,7 @@ class RefrigerationCycleGUI:
         )
         self.output_text.insert(tk.END, table_header)
 
+        # Prepare data for the table
         states = [
             (T1, low_pressure, D1, H1, S1),
             (T2, high_pressure, D2, H2, S2),
@@ -339,6 +355,7 @@ class RefrigerationCycleGUI:
             D_ip = convert_from_si("D", dens)
             H_ip = convert_from_si("H", enth)
             S_ip = convert_from_si("S", entr)
+
             self.output_text.insert(
                 tk.END,
                 f"  {i:>4d} | {T_ip:8.1f} | {P_ip:9.1f} | {D_ip:13.2f} | {H_ip:10.1f} | {S_ip:14.3f}\n"
@@ -381,17 +398,9 @@ class RefrigerationCycleGUI:
         )
         messagebox.showinfo("Reference State Info", ref_text)
 
-if __name__ == "__main__":
-    root = tk.Tk()
-    app = RefrigerationCycleGUI(root)
-    root.mainloop()
-          "IIR: International Institute of Refrigeration (used in Danfoss Coolselector2)\n\n"
-            "These shift absolute enthalpy/entropy values,\n"
-            "but not the relative changes."
-        )
-        messagebox.showinfo("Reference State Info", ref_text)
 
 if __name__ == "__main__":
     root = tk.Tk()
     app = RefrigerationCycleGUI(root)
     root.mainloop()
+
