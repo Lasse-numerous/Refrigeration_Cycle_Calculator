@@ -238,6 +238,7 @@ def main():
             st.write(f"**Mass Flow Rate:** {mass_flow_lb_min:.2f} lb/min")
 
             # Create DataFrame for state points
+            # Create DataFrame for state points
             st.header("State Points")
             df = pd.DataFrame({
                 "State": range(1, 5),
@@ -247,6 +248,16 @@ def main():
                 "h(BTU/lb)": [H1_ip, H2_ip, H3_ip, H4_ip],
                 "s(BTU/lbm·°F)": [S1_ip, S2_ip, S3_ip, S4_ip]
             })
+
+            # Round values to 2 decimal places
+            df = df.round({
+                "T(°F)": 1,
+                "P(psia)": 1,
+                "density(lbm/ft³)": 3,
+                "h(BTU/lb)": 2,
+                "s(BTU/lbm·°F)": 3
+            })
+
             st.dataframe(df)
 
             # Performance metrics
