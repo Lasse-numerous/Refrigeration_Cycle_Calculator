@@ -6,3 +6,5 @@ build/
 
 # added by numerous init
 .env
+
+.env

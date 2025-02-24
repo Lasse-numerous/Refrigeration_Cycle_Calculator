@@ -202,4 +202,6 @@ print(f"Heat Rejected by Condenser: {heat_rejected_btu_hr:.0f} BTU/hr")
 print(f"Coefficient of Performance (COP): {COP:.2f}")
 print(f"kW per Ton: {(compressor_work_kw / (heat_removed_btu_hr / 12000)):.2f}")
 print("Observe from the 1st Law of Thermo that the compressor work plus the heat absorbed in the evaporator equals the "
+      "heat rejected by the condenser!") / (heat_removed_btu_hr / 12000)):.2f}")
+print("Observe from the 1st Law of Thermo that the compressor work plus the heat absorbed in the evaporator equals the "
       "heat rejected by the condenser!")

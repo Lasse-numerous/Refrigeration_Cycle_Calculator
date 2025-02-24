@@ -385,3 +385,13 @@ if __name__ == "__main__":
     root = tk.Tk()
     app = RefrigerationCycleGUI(root)
     root.mainloop()
+          "IIR: International Institute of Refrigeration (used in Danfoss Coolselector2)\n\n"
+            "These shift absolute enthalpy/entropy values,\n"
+            "but not the relative changes."
+        )
+        messagebox.showinfo("Reference State Info", ref_text)
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = RefrigerationCycleGUI(root)
+    root.mainloop()

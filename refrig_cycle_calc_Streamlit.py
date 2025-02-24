@@ -202,7 +202,7 @@ def main():
             st.write(f"Mass Flow Rate: {mass_flow_lb_min:.2f} lb/min")
             
             # Create DataFrame for state points
-            # Create DataFrame for state points
+            st.header("State Points")
             df = pd.DataFrame({
                 "State": range(1, 5),
                 "T(°F)": [T1_ip, T2_ip, T3_ip, T4_ip],
@@ -211,18 +211,8 @@ def main():
                 "h(BTU/lb)": [H1_ip, H2_ip, H3_ip, H4_ip],
                 "s(BTU/lbm·°F)": [S1_ip, S2_ip, S3_ip, S4_ip]
             })
-
-            # Round each column to the desired decimal places
-            df = df.round({
-                "T(°F)": 1,
-                "P(psia)": 2,
-                "density(lbm/ft³)": 3,
-                "h(BTU/lb)": 2,
-                "s(BTU/lbm·°F)": 3
-            })
-
             st.dataframe(df)
-
+            
             # Performance metrics
             st.header("Performance Metrics")
             col1, col2 = st.columns(2)
@@ -230,6 +220,21 @@ def main():
                 st.metric("Compressor Work", f"{comp_btu_hr:,.0f} BTU/hr")
                 st.metric("Heat Removed", f"{rem_btu_hr:,.0f} BTU/hr")
                 st.metric("Heat Rejected", f"{rej_btu_hr:,.0f} BTU/hr")
+            with col2:
+                st.metric("Cooling Capacity", f"{tons_ref:.2f} Tons")
+                st.metric("COP", f"{COP:.2f}")
+                st.metric("kW per Ton", f"{kw_per_ton:.2f}")
+                
+        except Exception as e:
+            st.error(f"Calculation Error: {str(e)}")
+    
+    # Footer
+    st.markdown("---")
+    st.markdown("Developed in Python by Alex Kalmbach")
+
+if __name__ == "__main__":
+    main()
+          st.metric("Heat Rejected", f"{rej_btu_hr:,.0f} BTU/hr")
             with col2:
                 st.metric("Cooling Capacity", f"{tons_ref:.2f} Tons")
                 st.metric("COP", f"{COP:.2f}")
